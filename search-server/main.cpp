@@ -9,8 +9,10 @@
 #include <vector>
 #include <cstdlib>
 #include <iomanip>
+#include <numeric>
 
 using namespace std;
+const double EPSILON = 1e-6;
 
 //*******************************************************************************************
 template<typename Container>
@@ -188,7 +190,7 @@ public:
 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document &lhs, const Document &rhs) {
-                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                 if (abs(lhs.relevance - rhs.relevance) < EPSILON) {
                      return lhs.rating > rhs.rating;
                  } else {
                      return lhs.relevance > rhs.relevance;
@@ -268,10 +270,8 @@ private:
         if (ratings.empty()) {
             return 0;
         }
-        int rating_sum = 0;
-        for (const int rating : ratings) {
-            rating_sum += rating;
-        }
+
+        int rating_sum = std::accumulate(ratings.begin(), ratings.end(), 0);
         return rating_sum / static_cast<int>(ratings.size());
     }
 
@@ -366,6 +366,8 @@ void PrintDocument(const Document &document) {
 //*******************************************************************************************//
 
 // -------- Начало модульных тестов поисковой системы ----------
+// const double EPSILON = 1e-6;
+
 struct TestingDocs {
     const int id;
     const string text;
@@ -385,10 +387,16 @@ void TestAddDocument() {
         // Добавляем документ
         SearchServer server_test;
         server_test.AddDocument(0, "белый кот и модный ошейник"s, DocumentStatus::ACTUAL, {8, -3});
+        server_test.AddDocument(1, "пушистый кот пушистый хвост"s, DocumentStatus::ACTUAL, {7, 2, 7});
+        server_test.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
+        server_test.AddDocument(3, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, {0});
+        server_test.AddDocument(4, "ухоженный скворец евгений"s, DocumentStatus::BANNED, {9});
 
-        ASSERT_EQUAL(server_test.GetDocumentCount(), 1);
-        ASSERT_EQUAL(server_test.FindTopDocuments("кот модный"s).size(), 1U);
+        ASSERT_EQUAL(server_test.GetDocumentCount(), 5);
+        ASSERT_EQUAL(server_test.FindTopDocuments("кот модный"s).size(), 2U);
+        ASSERT_EQUAL(server_test.FindTopDocuments("скворец"s).size(), 0U);
         ASSERT_EQUAL(server_test.FindTopDocuments("кот модный"s)[0].id, 0);
+        ASSERT_EQUAL(server_test.FindTopDocuments("кот модный"s)[1].id, 1);
     }
 }
 
@@ -525,16 +533,27 @@ void TestSortingRelevanceDocument() {
         // [id 2,rel 0.35677908891003646, rating -1]
         ASSERT_EQUAL(funding_docs.size(), 2);
 
-        ASSERT_EQUAL(funding_docs[0].id, 3);
-        ASSERT_EQUAL(funding_docs[1].id, 2);
+        const double doc_rel_1 = 0.356779;
+        const double doc_rel_2 = 0.356779;
 
-        auto found_docs2 = server_test.FindTopDocuments("ухоженный"s);  // сначала актуальный
-        auto found_docs3 = server_test.FindTopDocuments("ухоженный"s);
+        ASSERT_EQUAL(funding_docs[0].id, 3);
+        ASSERT(std::abs(funding_docs[0].relevance - doc_rel_1) < EPSILON);
+
+        ASSERT_EQUAL(funding_docs[1].id, 2);
+        ASSERT(std::abs(funding_docs[1].relevance - doc_rel_2) < EPSILON);
+
+        auto funding_docs2 = server_test.FindTopDocuments("ухоженный"s);  // сначала актуальный
 //        // [id 3,rel 0.12770640594149768, rating 0]
 //        // [id 2,rel 0.12770640594149768, rating -1]
-        ASSERT_EQUAL(found_docs2.size(), 2);
-        ASSERT_EQUAL(found_docs2[0].id, 3);
-        ASSERT_EQUAL(found_docs2[1].id, 2);
+        const double doc_rel_3 = 0.127706;
+        const double doc_rel_4 = 0.127706;
+        ASSERT_EQUAL(funding_docs2.size(), 2);
+
+        ASSERT_EQUAL(funding_docs2[0].id, 3);
+        ASSERT(std::abs(funding_docs2[0].relevance - doc_rel_3) < EPSILON);
+
+        ASSERT_EQUAL(funding_docs2[1].id, 2);
+        ASSERT(std::abs(funding_docs2[1].relevance - doc_rel_4) < EPSILON);
 
     }
 }
@@ -593,16 +612,16 @@ void TestCustomSearchDocumentContent() {
             auto find_string = server_test.FindTopDocuments("пушистый ухоженный кот"s);
             ASSERT_EQUAL(find_string.size(), 4U);
 
-            auto predicat_status_rating = []([[maybe_unused]] int document_id, DocumentStatus status, int rating) {
+            auto predicate_status_rating = []([[maybe_unused]] int document_id, DocumentStatus status, int rating) {
                 return rating >= 4;
             };
-            auto found_docs = server_test.FindTopDocuments("ухоженный кот и пёс"s, predicat_status_rating);
+            auto found_docs = server_test.FindTopDocuments("ухоженный кот и пёс"s, predicate_status_rating);
             ASSERT_EQUAL(found_docs.size(), 2U);
 
-            auto predicat_status = []([[maybe_unused]] int document_id, DocumentStatus status, int rating) {
+            auto predicate_status = []([[maybe_unused]] int document_id, DocumentStatus status, int rating) {
                 return (status == DocumentStatus::BANNED) || (status == DocumentStatus::REMOVED);
             };
-            found_docs = server_test.FindTopDocuments("пушистый ухоженный кот"s, predicat_status);
+            found_docs = server_test.FindTopDocuments("пушистый ухоженный кот"s, predicate_status);
             ASSERT_EQUAL(found_docs.size(), 1U);
             ASSERT_EQUAL(found_docs[0].id, 4);
 
@@ -695,9 +714,12 @@ void TestRelevanceSearchedDocumentContent() {
         // Тестируем заполненный сервер
         ASSERT_EQUAL(server_test.GetDocumentCount(), 5);
         const auto found_docs = server_test.FindTopDocuments("и кот ухоженный");
-        vector<double> test_relevance = {0.22907, 0.22907, 0.12770, 0.12770};
+        vector<double> test_relevance = {0.229072, 0.229072, 0.127706, 0.127706};
+//        0.22907268296853878
+//        0.12770640594149768
         for (size_t i = 0; i < test_relevance.size(); i++) {
-            ASSERT(std::abs(test_relevance[i] - found_docs[i].relevance) < 1E-5);
+            ASSERT(std::abs(test_relevance[i] - found_docs[i].relevance) < EPSILON);//EPSILON
+//            ASSERT_EQUAL(std::abs(test_relevance[i] - found_docs[i].relevance) , EPSILON);//EPSILON
         }
     }
 
