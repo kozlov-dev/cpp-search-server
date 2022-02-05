@@ -141,10 +141,6 @@ class SearchServer {
     return matched_documents;
   }
 
-  // vector<Document> FindTopDocuments(const string &raw_query) const {
-  //   return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
-  // }
-
   tuple<vector<string>, DocumentStatus> MatchDocument(const string &raw_query,
                                                       int document_id) const {
     tuple<vector<string>, DocumentStatus> result = {};
@@ -326,19 +322,6 @@ class SearchServer {
     if (raw_query.back() == '-') return true;
     return false;
   }
-  /*
-  static bool IsIllegalMinusWord(const string &raw_query) {
-    if (raw_query.back() == '-') {  // кот-
-      return true;
-    } else {
-      for (int i = 0; i < raw_query.size(); ++i) {
-        if (raw_query[i] == '-' && raw_query[i + 1] == '-') {  //--кот
-          return true;
-        }
-      }
-    }
-    return false;
-  } */
 };
 
 // ------------ Пример использования ----------------
