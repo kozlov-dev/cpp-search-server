@@ -223,16 +223,21 @@ class SearchServer {
   };
 
   QueryWord ParseQueryWord(string text) const {
-    if (!IsValidWord(text) || IsIllegalMinusWord(text)) {
+    if (!IsValidWord(text)) {
       throw invalid_argument("Error valid word");
     }
 
-    bool is_minus = false;
+    bool is_minus = false;  // --кот
     // Word shouldn't be empty
     if (text[0] == '-') {
       is_minus = true;
-      text = text.substr(1);
+      text = text.substr(1);  // -кот
     }
+
+    if (IsIllegalMinusWord(text)) {
+      throw invalid_argument("Error valid word");
+    }
+
     return {text, is_minus, IsStopWord(text)};
   }
 
@@ -258,7 +263,6 @@ class SearchServer {
 
   // Existence required
   double ComputeWordInverseDocumentFreq(const string &word) const {
-    IsValidWord(word);
     return log(GetDocumentCount() * 1.0 /
                word_to_document_freqs_.at(word).size());
   }
@@ -314,16 +318,15 @@ class SearchServer {
                    [](char c) { return c >= '\0' && c < ' '; });
   }
   static bool IsIllegalMinusWord(const string &raw_query) {
-    for (int i = 1; i < raw_query.size(); ++i) {
-      if (raw_query[i - 1] == '-' &&
-          (raw_query[i] == ' ' || raw_query[i] == '-'))
-        return true;
-    }
+    if (raw_query.empty()) return true;
+
+    if (raw_query[0] == '-') return true;
+
     if (raw_query.back() == '-') return true;
+
     return false;
   }
 };
-
 // ------------ Пример использования ----------------
 
 void PrintDocument(const Document &document) {
@@ -364,7 +367,7 @@ void FindTopDocuments(const SearchServer &search_server,
       PrintDocument(document);
     }
   } catch (const exception &e) {
-    cout << "Ошибка поиска: "s << e.what() << endl;
+    cout << "!!!!!!!Ошибка поиска: "s << e.what() << endl;
   }
 }
 
@@ -380,7 +383,7 @@ void MatchDocuments(const SearchServer &search_server, const string &query) {
       PrintMatchDocumentResult(document_id, words, status);
     }
   } catch (const exception &e) {
-    cout << "Ошибка матчинга документов на запрос "s << query << ": "s
+    cout << "!!!!!!Ошибка матчинга документов на запрос "s << query << ": "s
          << e.what() << endl;
   }
 }
@@ -412,7 +415,7 @@ int main() {
   }
 
   {
-    SearchServer search_server("и в на скво\x12рец "s);
+    SearchServer search_server("и в на скворец "s);
     cout << "!!!__________________________________________" << endl;
 
     AddDocument(search_server, 1, "пушистый кот пушистый хвост"s,
