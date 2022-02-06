@@ -367,7 +367,7 @@ void FindTopDocuments(const SearchServer &search_server,
       PrintDocument(document);
     }
   } catch (const exception &e) {
-    cout << "!!!!!!!Ошибка поиска: "s << e.what() << endl;
+    cout << "Ошибка поиска: "s << e.what() << endl;
   }
 }
 
@@ -383,59 +383,31 @@ void MatchDocuments(const SearchServer &search_server, const string &query) {
       PrintMatchDocumentResult(document_id, words, status);
     }
   } catch (const exception &e) {
-    cout << "!!!!!!Ошибка матчинга документов на запрос "s << query << ": "s
+    cout << "Ошибка матчинга документов на запрос "s << query << ": "s
          << e.what() << endl;
   }
 }
 
 int main() {
-  {
-    SearchServer search_server("и в на"s);
+  SearchServer search_server("и в на"s);
 
-    AddDocument(search_server, 1, "пушистый кот пушистый хвост"s,
-                DocumentStatus::ACTUAL, {7, 2, 7});
-    AddDocument(search_server, 1, "пушистый пёс и модный ошейник"s,
-                DocumentStatus::ACTUAL, {1, 2});
-    AddDocument(search_server, -1, "пушистый пёс и модный ошейник"s,
-                DocumentStatus::ACTUAL, {1, 2});
-    AddDocument(search_server, 3, "большой пёс скво\x12рец евгений"s,
-                DocumentStatus::ACTUAL, {1, 3, 2});
-    AddDocument(search_server, 4, "большой пёс скворец евгений"s,
-                DocumentStatus::ACTUAL, {1, 1, 1});
+  AddDocument(search_server, 1, "пушистый кот пушистый хвост"s,
+              DocumentStatus::ACTUAL, {7, 2, 7});
+  AddDocument(search_server, 1, "пушистый пёс и модный ошейник"s,
+              DocumentStatus::ACTUAL, {1, 2});
+  AddDocument(search_server, -1, "пушистый пёс и модный ошейник"s,
+              DocumentStatus::ACTUAL, {1, 2});
+  AddDocument(search_server, 3, "большой пёс скво\x12рец евгений"s,
+              DocumentStatus::ACTUAL, {1, 3, 2});
+  AddDocument(search_server, 4, "большой пёс скворец евгений"s,
+              DocumentStatus::ACTUAL, {1, 1, 1});
 
-    FindTopDocuments(search_server, "пушистый -пёс"s);
-    FindTopDocuments(search_server, "пушистый --кот"s);
-    FindTopDocuments(search_server, "пушистый -"s);
+  FindTopDocuments(search_server, "пушистый -пёс"s);
+  FindTopDocuments(search_server, "пушистый --кот"s);
+  FindTopDocuments(search_server, "пушистый -"s);
 
-    MatchDocuments(search_server, "пушистый пёс"s);
-    MatchDocuments(search_server, "модный -кот"s);
-    MatchDocuments(search_server, "модный --пёс"s);
-    MatchDocuments(search_server, "пушистый - хвост"s);
-    cout << "______________________________________________" << endl;
-  }
-
-  {
-    SearchServer search_server("и в на скворец "s);
-    cout << "!!!__________________________________________" << endl;
-
-    AddDocument(search_server, 1, "пушистый кот пушистый хвост"s,
-                DocumentStatus::ACTUAL, {7, 2, 7});
-    AddDocument(search_server, 1, "пушистый пёс и модный ошейник"s,
-                DocumentStatus::ACTUAL, {1, 2});
-    AddDocument(search_server, -1, "пушистый пёс и модный ошейник"s,
-                DocumentStatus::ACTUAL, {1, 2});
-    AddDocument(search_server, 3, "большой пёс скво\x12рец евгений"s,
-                DocumentStatus::ACTUAL, {1, 3, 2});
-    AddDocument(search_server, 4, "большой пёс скворец евгений"s,
-                DocumentStatus::ACTUAL, {1, 1, 1});
-
-    FindTopDocuments(search_server, "пушистый -пёс"s);
-    FindTopDocuments(search_server, "пушистый --кот"s);
-    FindTopDocuments(search_server, "пушистый -"s);
-
-    MatchDocuments(search_server, "пушистый пёс"s);
-    MatchDocuments(search_server, "модный -кот"s);
-    MatchDocuments(search_server, "модный --пёс"s);
-    MatchDocuments(search_server, "пушистый - хвост"s);
-  }
+  MatchDocuments(search_server, "пушистый пёс"s);
+  MatchDocuments(search_server, "модный -кот"s);
+  MatchDocuments(search_server, "модный --пёс"s);
+  MatchDocuments(search_server, "пушистый - хвост"s);
 }
