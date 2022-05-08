@@ -1,6 +1,3 @@
-//
-// Created by DevStation on 20.02.2022.
-//
 #pragma once
 
 
@@ -30,4 +27,4 @@ std::ostream &operator<<(std::ostream &out, const Document &document);
 
 void PrintDocument(const Document& document);
 
-void PrintMatchDocumentResult(int document_id, const std::vector<std::string>& words, DocumentStatus status);
+void PrintMatchDocumentResult(int document_id, const std::vector<std::string_view>& words, DocumentStatus status);

@@ -1,7 +1,3 @@
-//
-// Created by DevStation on 20.02.2022.
-//
-
 #include "request_queue.h"
 
 using namespace std;

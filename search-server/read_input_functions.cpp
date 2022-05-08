@@ -1,7 +1,3 @@
-//
-// Created by DevStation on 20.02.2022.
-//
-
 #include "read_input_functions.h"
 
 using namespace  std;
